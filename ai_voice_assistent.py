@@ -1,4 +1,5 @@
 #all the libraries used in this project
+#all the libraries used in this project
 import asyncio
 import pygame
 import webbrowser
@@ -10,17 +11,25 @@ import ssl
 import certifi
 import datetime
 import re
+
 import google.generativeai as genai
 import musiclibery  # make sure this file exists(as i creaated on my own)
-
 # Safe SSL context for Edge TTS
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
-# Configure with your API key(pleas use your own api key here)
-genai.configure(api_key="")
 
-# Load the correct model (flash 2.5)
-model = genai.GenerativeModel("gemini-2.5-flash")
+# Configure your Gemini API key
+genai.configure("enter your own API key to activate the ai ")
+
+# Create the model object
+model = genai.GenerativeModel(
+    "gemini-2.5-flash",
+system_instruction=
+        ( "You are 'friday', an AI voice assistant created by Nitin. you give short and accurate answers "
+         "you are very polite in nature " 
+        )
+         )
+
 
 def get(text):
     """Fallback TTS using gTTS (Google)"""
@@ -54,7 +63,7 @@ async def bol_async(text):
     os.remove("temp.mp3")
 
 
-def bol(text):
+def speak(text):
     """Sync wrapper for bol_async"""
     try:
         asyncio.run(bol_async(text))
@@ -70,23 +79,23 @@ def process_command(c):
     # Website commands
     if "open google" in c:
         webbrowser.open("https://google.com")
-        bol("Opening Google, sir.")
+        speak("Opening Google, sir.")
         return
     elif "open facebook" in c:
         webbrowser.open("https://facebook.com")
-        bol("Opening Facebook, sir.")
+        speak("Opening Facebook, sir.")
         return
     elif "open whatsapp" in c:
         webbrowser.open("https://web.whatsapp.com")
-        bol("Opening WhatsApp, sir.")
+        speak("Opening WhatsApp, sir.")
         return
     elif "open youtube" in c:
         webbrowser.open("https://youtube.com")
-        bol("Opening YouTube, sir.")
+        speak("Opening YouTube, sir.")
         return
     elif "open spotify" in c:
         webbrowser.open("https://spotify.com")
-        bol("Opening Spotify, sir.")
+        speak("Opening Spotify, sir.")
         return
 
     # Music commands 
@@ -94,43 +103,39 @@ def process_command(c):
         song = c.split(" ", 1)[1]
         if song in musiclibery.music:
             webbrowser.open(musiclibery.music[song])
-            bol(f"Playing {song}, sir.")
+            speak(f"Playing {song}, sir.")
         else:
-            bol("Sorry sir, I could not find that song.")
+            speak("Sorry sir, I could not find that song.")
         return  #stop here, don’t call Gemini
 
     # AI Chat fallback 
     else:
-        bol("Let me think about that...")
+        speak("wait a minute sir...")
         try:
-            chat = model.start_chat(history=[])
-            response = chat.send_message(c)
-            answer = response.text
+            response = model.generate_content(c)
+            answer = response.text.strip() if hasattr(response, "text") else ""
 
             if answer:
                 clean_answer = re.sub(r"[*#`>_~]", "", answer)
                 sentences = clean_answer.split(". ")
                 short_answer = ". ".join(sentences[:3])
-                bol(short_answer)
-                print("Gemini:", clean_answer)
+                speak(short_answer)
             else:
-                bol("Sorry sir, I couldn't find an answer.")
+                speak("Sorry sir, I couldn't find an answer.")
         except Exception as e:
             print("Gemini error:", e)
-            bol("Sorry sir, I faced a problem connecting to Gemini.")
-
+            speak("Sorry sir, I faced a problem connecting to Gemini.")
 
 
 if __name__ == "__main__":
  def wishMe():
     hour = int(datetime.datetime.now().hour)
     if hour >= 0 and hour < 12:
-        bol("Good morning, sir!")
+        speak("Good morning, sir!")
     elif hour >= 12 and hour < 18:
-        bol("Good afternoon, sir!")
+        speak("Good afternoon, sir!")
     else:
-        bol("Good evening, sir!")
-    bol("wellcome back sir ?")
+        speak("Good evening, sir!")
     recognizer = sr.Recognizer()
 
     recognizer = sr.Recognizer()
@@ -143,15 +148,21 @@ if __name__ == "__main__":
             word = recognizer.recognize_google(audio)
 
             if word.lower() == "friday":
-                bol("tell me sir .")
+                speak("tell me sir .")
                 with sr.Microphone() as source:
-                    print("Jarvis activated...")
+                    print("friday activated...")
                     audio = recognizer.listen(source)
                     command = recognizer.recognize_google(audio)
                     process_command(command)
-
+                    
+        
         except Exception as e:
             print("Error:", e)
-
-wishMe()            
+            
+        except KeyboardInterrupt:
+            print("\nExiting, sir. Goodbye.")
+            break
+            
+wishMe()    
+#here i completed the code
 #here i completed the code
